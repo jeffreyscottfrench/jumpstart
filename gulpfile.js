@@ -180,7 +180,7 @@ gulp.task( 'browser-sync', function() {
     port: 3000,
 
     // Use a specific browser or multiple browsers ("google chrome" or multiple ["firefox", "safari technology preview"] ).
-    browser: "google chrome",
+    browser: ["google chrome", "firefox developer edition"]
 
   } );
 });
