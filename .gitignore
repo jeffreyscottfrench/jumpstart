@@ -1,6 +1,13 @@
 *.log
 build/images/*
 build/assets/img/*
+build/js/*.js
+
+# exclude generated html in build folder
+# build/*.html
+# include google verification html doc
+# !build/google*.html
+
 dist/
 node_modules/
 src/
