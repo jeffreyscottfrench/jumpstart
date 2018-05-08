@@ -21,11 +21,14 @@
   "homepage": "https://github.com/jeffreyscottfrench/jumpstart#readme",
   "devDependencies": {
     "autoprefixer": "^8.4.1",
+    "babel-core": "^6.26.3",
+    "babel-preset-env": "^1.6.1",
     "browser-sync": "^2.24.4",
     "css-mqpacker": "^6.0.2",
     "cssnano": "^3.10.0",
     "del": "^3.0.0",
     "gulp": "3.9.1",
+    "gulp-babel": "^7.0.1",
     "gulp-cache": "^1.0.2",
     "gulp-clean-css": "^3.9.4",
     "gulp-concat": "^2.6.1",
@@ -65,7 +68,9 @@
   "cssnano": {
     "preset": [
       "default",
-      {"colorMin": false}
+      {
+        "colorMin": false
+      }
     ]
   }
 }

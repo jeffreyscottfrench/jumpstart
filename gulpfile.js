@@ -57,7 +57,7 @@ var jsVendorFile            = 'vendors'; // Compiled JS vendors file name.
 // JS Custom related.
 var jsCustomSRC             = './build/assets/js/custom/*.js'; // Path to JS custom scripts folder.
 var jsCustomDestination     = './build/assets/js/'; // Path to place the compiled JS custom scripts file.
-var jsCustomFile            = 'ProjectName'; // Compiled JS custom file name.
+var jsCustomFile            = project; // Compiled JS custom file name.
 // Default set to custom i.e. custom.js.
 
 // Images related.
@@ -115,6 +115,7 @@ var cssnano      = require('cssnano'); // Minifies CSS files.
 var cssmqpacker  = require('css-mqpacker'); // Combine matching media queries into one media query definition.
 
 // JS related plugins.
+var babel        = require('gulp-babel'); // write ES6!
 var concat       = require('gulp-concat'); // Concatenates JS files
 var uglify       = require('gulp-uglify'); // Minifies JS files
 
@@ -311,18 +312,28 @@ gulp.task('styles', function () {
  *     4. Uglifes/Minifies the JS file and generates vendors.min.js
  */
 gulp.task( 'vendorsJs', function() {
- gulp.src( jsVendorSRC )
-   .pipe( concat( jsVendorFile + '.js' ) )
-   .pipe( lineec() ) // Consistent Line Endings for non UNIX systems.
-   .pipe( gulp.dest( jsVendorDestination ) )
-   .pipe( rename( {
-     basename: jsVendorFile,
-     suffix: '.min'
-   }))
-   .pipe( uglify() )
-   .pipe( lineec() ) // Consistent Line Endings for non UNIX systems.
-   .pipe( gulp.dest( jsVendorDestination ) )
-   .pipe( notify( { message: 'TASK: "vendorsJs" Completed! 💯', onLast: true } ) );
+  gulp.src( jsVendorSRC )
+  .pipe( sourcemaps.init() )
+  .pipe( babel({
+    presets:['env']
+  }) )
+  .pipe( concat( jsVendorFile + '.js' ) )
+  .pipe( sourcemaps.write('.') )
+  .pipe( gulp.dest( jsVendorDestination ) )
+  .pipe( rename( {
+    basename: jsVendorFile,
+    suffix: '.min'
+  }))
+  .pipe( filter( '**/*.js' )) // Filtering stream to only js files
+  .pipe( uglify() )
+  .pipe( lineec() ) // Consistent Line Endings for non UNIX systems.
+  .pipe( gulp.dest( jsVendorDestination ) )
+  .pipe( notify({
+    onLast: true,
+    message: function(){
+      return 'TASK: "vendorsJs" Completed! 💯';
+    }
+  }) );
 });
 
 
@@ -338,18 +349,28 @@ gulp.task( 'vendorsJs', function() {
  *     4. Uglifes/Minifies the JS file and generates custom.min.js
  */
 gulp.task( 'customJS', function() {
-   gulp.src( jsCustomSRC )
-   .pipe( concat( jsCustomFile + '.js' ) )
-   .pipe( lineec() ) // Consistent Line Endings for non UNIX systems.
-   .pipe( gulp.dest( jsCustomDestination ) )
-   .pipe( rename( {
-     basename: jsCustomFile,
-     suffix: '.min'
-   }))
-   .pipe( uglify() )
-   .pipe( lineec() ) // Consistent Line Endings for non UNIX systems.
-   .pipe( gulp.dest( jsCustomDestination ) )
-   .pipe( notify( { message: 'TASK: "customJs" Completed! 💯', onLast: true } ) );
+    gulp.src( jsCustomSRC )
+    .pipe( sourcemaps.init() )
+    .pipe( babel({
+      presets:['env']
+    }) )
+    .pipe( concat( jsCustomFile + '.js' ) )
+    .pipe( sourcemaps.write('.') )
+    .pipe( gulp.dest( jsCustomDestination ) )
+    .pipe( rename( {
+      basename: jsCustomFile,
+      suffix: '.min'
+    }))
+    .pipe( filter( '**/*.js' )) // Filtering stream to only js files
+    .pipe( uglify() )
+    .pipe( lineec() ) // Consistent Line Endings for non UNIX systems.
+    .pipe( gulp.dest( jsCustomDestination ) )
+    .pipe( notify({
+      onLast: true,
+      message: function(){
+        return 'TASK: "customJS" Completed! 💯';
+      }
+    }) );
 });
 
 /**
@@ -472,18 +493,31 @@ gulp.task('build', function(){
 //  gulp.watch( customJSWatchFiles, [ 'customJS', 'sync', reload ] ); // Reload on customJS file changes.
 // });
 
-// Standard
-gulp.task( 'default', ['nunjucks', 'json', 'styles', 'vendorsJs', 'customJS', 'images', 'browser-sync'], function () {
+// Watch for changes (called from default)
+gulp.task('watch', function(){
   // Rebuild compiled html files on nunjuck file changes and reload.
-  gulp.watch( projectNunjucksWatchFiles, [ 'nunjucks', 'json' ] );
+  gulp.watch( projectNunjucksWatchFiles, function(){
+    runSequence('nunjucks', 'json', browserSync.reload);
+  });
   // Reload on SCSS file changes.
-  gulp.watch( projectPHPWatchFiles, [ reload ] );
-  // Reload on images file changes.
-  gulp.watch( imageWatchFiles, [ 'images', reload ] );
-  // Reload on SCSS file changes.
-  gulp.watch( styleWatchFiles, [ 'styles', reload ] );
+  gulp.watch( projectPHPWatchFiles ).on('change', browserSync.reload );
+  // Rerun on SCSS file changes (will inject from styles task).
+  gulp.watch( styleWatchFiles, function(){
+    runSequence('styles');
+  } );
+  // Rerun and Reload on images file changes.
+  gulp.watch( imageWatchFiles, function(){
+    runSequence('images', browserSync.reload);
+  });
   // Reload on vendorsJs file changes.
-  gulp.watch( vendorJSWatchFiles, [ 'vendorsJs', reload ] );
-  // Reload on customJS file changes.
-  gulp.watch( customJSWatchFiles, [ 'customJS', reload ] );
+  gulp.watch( vendorJSWatchFiles ).on('change', browserSync.reload);
+  // Rerun and Reload on customJS file changes.
+  gulp.watch( customJSWatchFiles, function(){
+    runSequence('customJS', browserSync.reload);
+  });
+});
+
+// Standard
+gulp.task( 'default', function(){
+  runSequence('nunjucks', 'json', 'styles', 'vendorsJs', 'customJS', 'images', 'browser-sync', 'watch')
 });
