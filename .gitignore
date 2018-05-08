@@ -1,7 +1,12 @@
 *.log
 build/images/*
 build/assets/img/*
-build/js/*.js
+
+build/assets/css/*.min.css
+build/assets/css/*.css.map
+
+build/assets/js/*.js
+build/assets/js/*.js.map
 
 # exclude generated html in build folder
 # build/*.html
