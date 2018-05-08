@@ -109,9 +109,10 @@ var gulp         = require('gulp'); // Gulp of-course
 
 // CSS related plugins.
 var sass         = require('gulp-sass'); // Gulp pluign for Sass compilation.
-var minifycss    = require('gulp-uglifycss'); // Minifies CSS files.
-var autoprefixer = require('gulp-autoprefixer'); // Autoprefixing magic.
-var mmq          = require('gulp-merge-media-queries'); // Combine matching media queries into one media query definition.
+var postcss      = require('gulp-postcss');
+var autoprefixer = require('autoprefixer'); // Autoprefixing magic.
+var cssnano      = require('cssnano'); // Minifies CSS files.
+var cssmqpacker  = require('css-mqpacker'); // Combine matching media queries into one media query definition.
 
 // JS related plugins.
 var concat       = require('gulp-concat'); // Concatenates JS files
@@ -184,6 +185,33 @@ gulp.task( 'browser-sync', function() {
 
   } );
 });
+gulp.task( 'browser-sync_proof', function() {
+  browserSync.init( {
+
+    // For more options
+    // @link http://www.browsersync.io/docs/options/
+    server: {
+      baseDir: './dist'
+    },
+    // Project URL.
+    // proxy: 'stephentalasnik.dev',
+
+    // `true` Automatically open the browser with BrowserSync live server.
+    // `false` Stop the browser from automatically opening.
+    open: true,
+
+    // Inject CSS changes.
+    // Comment it to reload browser for every CSS change.
+    injectChanges: true,
+
+    // Use a specific port (instead of the one auto-detected by Browsersync).
+    port: 8888,
+
+    // Use a specific browser or multiple browsers ("google chrome" or multiple ["firefox", "safari technology preview"] ).
+    browser: ["google chrome", "firefox developer edition"]
+
+  } );
+});
 
 /**
  * Task: 'nunjucks'
@@ -231,41 +259,44 @@ gulp.task('json', function() {
  *    7. Injects CSS or reloads the browser via browserSync
  */
 gulp.task('styles', function () {
-   gulp.src( styleSRC )
-   .pipe( sourcemaps.init() )
-   .pipe( sass( {
-     errLogToConsole: true,
-     outputStyle: 'compact',
-     //outputStyle: 'compressed',
-     // outputStyle: 'nested',
-     // outputStyle: 'expanded',
-     precision: 10
-   } ) )
-   .on('error', console.error.bind(console))
-   .pipe( sourcemaps.write( { includeContent: false } ) )
-   .pipe( sourcemaps.init( { loadMaps: true } ) )
-   .pipe( autoprefixer() )
-   // .pipe( autoprefixer( AUTOPREFIXER_BROWSERS ) ) // uncomment for manual list
+  gulp.src( styleSRC )
+  .pipe( sourcemaps.init() )
+  .pipe( sass( {
+    errLogToConsole: true,
+    outputStyle: 'compact',
+    //outputStyle: 'compressed',
+    // outputStyle: 'nested',
+    // outputStyle: 'expanded',
+    precision: 10
+  } ) )
+  .on('error', console.error.bind(console))
+  .pipe( sourcemaps.write( { includeContent: false } ) )
+  .pipe( sourcemaps.init( { loadMaps: true } ) )
+  .pipe( postcss([ autoprefixer(), cssmqpacker() ]) )
+  // uncomment for manual list set above
+  // .pipe( postcss(autoprefixer( AUTOPREFIXER_BROWSERS )) )
 
-   .pipe( sourcemaps.write ( "" ) ) // gulp is already in the dest folder now.
-   .pipe( lineec() ) // Consistent Line Endings for non UNIX systems.
-   .pipe( gulp.dest( styleDestination ) )
+  .pipe( sourcemaps.write ( "." ) ) // gulp is already in the dest folder now.
+  .pipe( lineec() ) // Consistent Line Endings for non UNIX systems.
+  .pipe( gulp.dest( styleDestination ) )
 
-   .pipe( filter( '**/*.css' ) ) // Filtering stream to only css files
-   .pipe( mmq( { log: true } ) ) // Merge Media Queries only for .min.css version.
+  .pipe( filter( '**/*.css' ) ) // Filtering stream to only css files
 
-   .pipe( browserSync.stream() ) // Reloads style.css if that is enqueued.
+  .pipe( browserSync.stream() ) // Reloads style.css if that is enqueued.
 
-   .pipe( rename( { suffix: '.min' } ) )
-   .pipe( minifycss( {
-     maxLineLen: 10
-   }))
-   .pipe( lineec() ) // Consistent Line Endings for non UNIX systems.
-   .pipe( gulp.dest( styleDestination ) )
+  .pipe( rename( { suffix: '.min' } ) )
+  .pipe( postcss([ cssnano() ]) )
+  .pipe( lineec() ) // Consistent Line Endings for non UNIX systems.
+  .pipe( gulp.dest( styleDestination ))
 
-   .pipe( filter( '**/*.css' ) ) // Filtering stream to only css files
-   .pipe( browserSync.stream() )// Reloads style.min.css if that is enqueued.
-   .pipe( notify( { message: 'TASK: "styles" Completed! 💯', onLast: true } ) )
+  .pipe( filter( '**/*.css' )) // Filtering stream to only css files
+  .pipe( browserSync.stream() )// Reloads style.min.css if that is enqueued.
+  .pipe( notify({
+    onlast: true,
+    message: function(){
+      return 'TASK: "styles" Completed! 💯';
+    }
+  }));
 });
 
 /**
@@ -429,8 +460,8 @@ gulp.task('copyFiles', function(){
 
 /** Build out the site to upload */
 gulp.task('build', function(){
-  runSequence('clean:dist', 'alias-folders',
-    ['useref', 'fonts', 'copyFiles'])
+  runSequence('clean:dist', 'alias-folders', 'nunjucks',
+    ['useref', 'fonts', 'copyFiles'], 'browser-sync_proof')
 });
 
 // Use With Sync to Virtual Machine (WP development)
