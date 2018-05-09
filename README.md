@@ -21,6 +21,7 @@ License: MIT or as noted by original authors.
 * create new repo on github for this project (same name as above)
 * git remote set-url origin <new-repo-on-github>
 * git push origin master <new-repo-on-github>
+* optional: set jumpstart as the upstream to be able to get updates using directions here: https://help.github.com/articles/configuring-a-remote-for-a-fork/
 
 
 ##### Install Node Modules:
