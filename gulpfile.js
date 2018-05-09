@@ -463,7 +463,10 @@ gulp.task('alias-folders', function(){
 });
 gulp.task('useref', function(){
   return gulp.src('./build/**/*.+(html|php)')
-  .pipe(useref())
+  .pipe(useref({transformPath: function(filePath){
+    const regExp = '\.*\/assets\\';
+    return filePath.replace(regExp, '/assets');
+  }}))
   .pipe(gulpIf('*.js', rev()))
   .pipe(gulpIf('*.css', rev()))
   .pipe(revReplace())

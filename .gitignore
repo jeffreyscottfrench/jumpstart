@@ -9,7 +9,7 @@ build/assets/js/*.js
 build/assets/js/*.js.map
 
 # exclude generated html in build folder
-# build/*.html
+build/*.html
 # include google verification html doc
 # !build/google*.html
 
