@@ -18,7 +18,7 @@
  *     11. Build site for deployment noting revised assets.
  *
  * @author Jeffrey Scott French - extended from work by Ahmad Awais (@ahmadawais)
- * @version 1.1.0
+ * @version 1.2.0
  */
 /**
  * Configuration.
@@ -30,7 +30,8 @@
 
  // START Editing Project Variables. Use the guide in the ReadMe.
  // Project related.
- var project                 = 'ProjectName'; // Project Name lower case no space.
+ var client                  = 'Project_Name'; // Human readable, spaces allowed.
+ var project                 = 'projectName'; // Computer readable, no spaces, used in filenames.
  var projectURL              = 'ProjectURLBase.dev'; // Project URL. Could be something like localhost:8888.
  var productURL              = './'; // Theme/Plugin URL. Leave it like it is, since our gulpfile.js lives in the root folder.
 
@@ -110,9 +111,9 @@ var gulp         = require('gulp'); // Gulp of-course
 // CSS related plugins.
 var sass         = require('gulp-sass'); // Gulp pluign for Sass compilation.
 var postcss      = require('gulp-postcss');
-var autoprefixer = require('autoprefixer'); // Autoprefixing magic.
+var autoprefixer = require('gulp-autoprefixer'); // Autoprefixing magic.
 var cssnano      = require('cssnano'); // Minifies CSS files.
-var cssmqpacker  = require('css-mqpacker'); // Combine matching media queries into one media query definition.
+var mmq          = require('gulp-merge-media-queries'); // Combine matching media queries into one media query definition.
 
 // JS related plugins.
 var babel        = require('gulp-babel'); // write ES6!
@@ -121,6 +122,10 @@ var uglify       = require('gulp-uglify'); // Minifies JS files
 
 // Image realted plugins.
 var imagemin     = require('gulp-imagemin'); // Minify PNG, JPEG, GIF and SVG images with imagemin.
+var imageminJpegOptim = require('imagemin-jpegoptim');
+var imageResize  = require('gulp-image-resize'); // Resize using ImageMagick
+var exif         = require('exiftool');
+var fs           = require('fs');
 
 // Nunjucks related plugins.
 var nunjucksRender = require('gulp-nunjucks-render');
@@ -139,6 +144,11 @@ var symlink      = require('gulp-sym'); // Create a shortcut reference instead o
 var newer        = require('gulp-newer');
 var del          = require('del');
 var path         = require('path');
+var through      = require('through2');
+var parallel     = require('concurrent-transform');
+var os           = require('os');
+var fileList     = require('gulp-filelist');
+var filenames    = require('gulp-filenames');
 var data         = require('gulp-data'); // Attach data from outside source
 var lazypipe     = require('lazypipe');
 var runSequence  = require('run-sequence');
@@ -159,8 +169,8 @@ var reload       = browserSync.reload; // For manual browser reload.
  *    3. You may define a custom port
  *    4. You may want to stop the browser from openning automatically
  */
-gulp.task( 'browser-sync', function() {
-  browserSync.init( {
+gulp.task('browser-sync', function () {
+  browserSync.init({
 
     // For more options
     // @link http://www.browsersync.io/docs/options/
@@ -184,10 +194,10 @@ gulp.task( 'browser-sync', function() {
     // Use a specific browser or multiple browsers ("google chrome" or multiple ["firefox", "safari technology preview"] ).
     browser: ["google chrome", "firefox developer edition"]
 
-  } );
+  });
 });
-gulp.task( 'browser-sync_proof', function() {
-  browserSync.init( {
+gulp.task('browser-sync_proof', function () {
+  browserSync.init({
 
     // For more options
     // @link http://www.browsersync.io/docs/options/
@@ -211,19 +221,19 @@ gulp.task( 'browser-sync_proof', function() {
     // Use a specific browser or multiple browsers ("google chrome" or multiple ["firefox", "safari technology preview"] ).
     browser: ["google chrome", "firefox developer edition"]
 
-  } );
+  });
 });
 
 /**
  * Task: 'nunjucks'
  * standard nunjucks environment
  **/
-gulp.task('nunjucks', function(){
-  return gulp.src('./build/nunjucks/pages/**/*.+(nunjucks|njk|html)')
-  .pipe(nunjucksRender({
-    path: ['./build/nunjucks/templates']
-  }))
-  .pipe(gulp.dest('./build'))
+gulp.task('nunjucks', function () {
+  return gulp.src('./build/nunjucks/njk_SrcFiles/**/*.+(njk|html)')
+    .pipe(nunjucksRender({
+      path: ['./build/nunjucks/templates']
+    }))
+    .pipe(gulp.dest('./build'))
 });
 
 /**
@@ -231,19 +241,19 @@ gulp.task('nunjucks', function(){
  * Used to pull data from json object and pass to all parts of nunjucks
  * Use .nunjucks file extension when pulling from json data object
  **/
-var getJsonData = function(file) {
+var getJsonData = function (file) {
   var fs = require('fs');
   return JSON.parse(fs.readFileSync(path.dirname(file.path) + '/' + path.basename(file.path, '.nunjucks') + '.json'));
 };
 
-gulp.task('json', function() {
-  return gulp.src('./build/nunjucks/pages/**/*.nunjucks')
-  .pipe(data(getJsonData))
-  // Do stuff with the data here or just send it on down the pipe
-  .pipe(nunjucksRender({
-    path: ['./build/nunjucks/templates']
-  }))
-  .pipe(gulp.dest('./build'))
+gulp.task('json', function () {
+  return gulp.src('./build/nunjucks/njk_SrcFiles/**/*.nunjucks')
+    .pipe(data(getJsonData))
+    // Do stuff with the data here or just send it on down the pipe
+    .pipe(nunjucksRender({
+      path: ['./build/nunjucks/templates']
+    }))
+    .pipe(gulp.dest('./build'))
 });
 /**
  * Task: `styles`.
@@ -260,44 +270,53 @@ gulp.task('json', function() {
  *    7. Injects CSS or reloads the browser via browserSync
  */
 gulp.task('styles', function () {
-  gulp.src( styleSRC )
-  .pipe( sourcemaps.init() )
-  .pipe( sass( {
-    errLogToConsole: true,
-    outputStyle: 'compact',
-    //outputStyle: 'compressed',
-    // outputStyle: 'nested',
-    // outputStyle: 'expanded',
-    precision: 10
-  } ) )
-  .on('error', console.error.bind(console))
-  .pipe( sourcemaps.write( { includeContent: false } ) )
-  .pipe( sourcemaps.init( { loadMaps: true } ) )
-  .pipe( postcss([ autoprefixer(), cssmqpacker() ]) )
-  // uncomment for manual list set above
-  // .pipe( postcss(autoprefixer( AUTOPREFIXER_BROWSERS )) )
+  gulp.src(styleSRC)
+    .pipe(sourcemaps.init())
+    .pipe(sass({
+      errLogToConsole: true,
+      outputStyle: 'compact',
+      //outputStyle: 'compressed',
+      // outputStyle: 'nested',
+      // outputStyle: 'expanded',
+      precision: 10
+    }))
+    .on('error', console.error.bind(console))
+    .pipe(sourcemaps.write({
+      includeContent: false
+    }))
+    .pipe(sourcemaps.init({
+      loadMaps: true
+    }))
+    // uncomment for manual list set above
+    // .pipe( postcss(autoprefixer( AUTOPREFIXER_BROWSERS )) )
+    .pipe(autoprefixer())
 
-  .pipe( sourcemaps.write ( "." ) ) // gulp is already in the dest folder now.
-  .pipe( lineec() ) // Consistent Line Endings for non UNIX systems.
-  .pipe( gulp.dest( styleDestination ) )
+    .pipe(sourcemaps.write(".")) // gulp is already in the dest folder now.
+    .pipe(lineec()) // Consistent Line Endings for non UNIX systems.
+    .pipe(gulp.dest(styleDestination))
 
-  .pipe( filter( '**/*.css' ) ) // Filtering stream to only css files
+    .pipe(filter('**/*.css')) // Filtering stream to only css files
+    .pipe(mmq({
+      log: true
+    }))
 
-  .pipe( browserSync.stream() ) // Reloads style.css if that is enqueued.
+    .pipe(browserSync.stream()) // Reloads style.css if that is enqueued.
 
-  .pipe( rename( { suffix: '.min' } ) )
-  .pipe( postcss([ cssnano() ]) )
-  .pipe( lineec() ) // Consistent Line Endings for non UNIX systems.
-  .pipe( gulp.dest( styleDestination ))
+    .pipe(rename({
+      suffix: '.min'
+    }))
+    .pipe(postcss([cssnano()]))
+    .pipe(lineec()) // Consistent Line Endings for non UNIX systems.
+    .pipe(gulp.dest(styleDestination))
 
-  .pipe( filter( '**/*.css' )) // Filtering stream to only css files
-  .pipe( browserSync.stream() )// Reloads style.min.css if that is enqueued.
-  .pipe( notify({
-    onlast: true,
-    message: function(){
-      return 'TASK: "styles" Completed! 💯';
-    }
-  }));
+    .pipe(filter('**/*.css')) // Filtering stream to only css files
+    .pipe(browserSync.stream()) // Reloads style.min.css if that is enqueued.
+    .pipe(notify({
+      onlast: true,
+      message: function () {
+        return 'TASK: "styles" Completed! 💯';
+      }
+    }));
 });
 
 /**
@@ -311,29 +330,29 @@ gulp.task('styles', function () {
  *     3. Renames the JS file with suffix .min.js
  *     4. Uglifes/Minifies the JS file and generates vendors.min.js
  */
-gulp.task( 'vendorsJs', function() {
-  gulp.src( jsVendorSRC )
-  .pipe( sourcemaps.init() )
-  .pipe( babel({
-    presets:['env']
-  }) )
-  .pipe( concat( jsVendorFile + '.js' ) )
-  .pipe( sourcemaps.write('.') )
-  .pipe( gulp.dest( jsVendorDestination ) )
-  .pipe( rename( {
-    basename: jsVendorFile,
-    suffix: '.min'
-  }))
-  .pipe( filter( '**/*.js' )) // Filtering stream to only js files
-  .pipe( uglify() )
-  .pipe( lineec() ) // Consistent Line Endings for non UNIX systems.
-  .pipe( gulp.dest( jsVendorDestination ) )
-  .pipe( notify({
-    onLast: true,
-    message: function(){
-      return 'TASK: "vendorsJs" Completed! 💯';
-    }
-  }) );
+gulp.task('vendorsJs', function () {
+  gulp.src(jsVendorSRC)
+    .pipe(sourcemaps.init())
+    .pipe(babel({
+      presets: ['env']
+    }))
+    .pipe(concat(jsVendorFile + '.js'))
+    .pipe(sourcemaps.write('.'))
+    .pipe(gulp.dest(jsVendorDestination))
+    .pipe(rename({
+      basename: jsVendorFile,
+      suffix: '.min'
+    }))
+    .pipe(filter('**/*.js')) // Filtering stream to only js files
+    .pipe(uglify())
+    .pipe(lineec()) // Consistent Line Endings for non UNIX systems.
+    .pipe(gulp.dest(jsVendorDestination))
+    .pipe(notify({
+      onLast: true,
+      message: function () {
+        return 'TASK: "vendorsJs" Completed! 💯';
+      }
+    }));
 });
 
 
@@ -348,30 +367,118 @@ gulp.task( 'vendorsJs', function() {
  *     3. Renames the JS file with suffix .min.js
  *     4. Uglifes/Minifies the JS file and generates custom.min.js
  */
-gulp.task( 'customJS', function() {
-    gulp.src( jsCustomSRC )
-    .pipe( sourcemaps.init() )
-    .pipe( babel({
-      presets:['env']
-    }) )
-    .pipe( concat( jsCustomFile + '.js' ) )
-    .pipe( sourcemaps.write('.') )
-    .pipe( gulp.dest( jsCustomDestination ) )
-    .pipe( rename( {
+gulp.task('customJS', function () {
+  gulp.src(jsCustomSRC)
+    .pipe(sourcemaps.init())
+    .pipe(babel({
+      presets: ['env']
+    }))
+    .pipe(concat(jsCustomFile + '.js'))
+    .pipe(sourcemaps.write('.'))
+    .pipe(gulp.dest(jsCustomDestination))
+    .pipe(rename({
       basename: jsCustomFile,
       suffix: '.min'
     }))
-    .pipe( filter( '**/*.js' )) // Filtering stream to only js files
-    .pipe( uglify() )
-    .pipe( lineec() ) // Consistent Line Endings for non UNIX systems.
-    .pipe( gulp.dest( jsCustomDestination ) )
-    .pipe( notify({
+    .pipe(filter('**/*.js')) // Filtering stream to only js files
+    .pipe(uglify())
+    .pipe(lineec()) // Consistent Line Endings for non UNIX systems.
+    .pipe(gulp.dest(jsCustomDestination))
+    .pipe(notify({
       onLast: true,
-      message: function(){
+      message: function () {
         return 'TASK: "customJS" Completed! 💯';
       }
-    }) );
+    }));
 });
+
+let resizeImageTasks = [];
+
+[400,600,800,1200,1600,2000].forEach(function(size){
+  var resizeImageTask = 'resize_' + size;
+  gulp.task(resizeImageTask, function(){
+    return gulp.src( imagesSRC )
+      .pipe( filter('**/*.jpg'))
+      .pipe( newer( {
+        dest: imagesDestination,
+        map:
+          function(relativePath) {
+            let relativePathBasename = relativePath.replace('.jpg', '');
+            return relativePathBasename + '-' + size + '.jpg';
+          }
+      }))
+      .pipe( parallel(
+        imageResize({
+          imageMagick: true,
+          width: size,
+          crop: false,
+          upscale: false
+        }),
+        os.cpus().length
+      ))
+      .pipe( rename( function(path) {
+          path.basename += '-' + size;
+      }))
+      .pipe( imagemin([
+        imageminJpegOptim({
+          max: 80,
+          stripAll: false,
+          stripCom: true,
+          stripExif: true,
+          stripIptc: true,
+          stripXmp: true,
+          stripIcc: false
+        })
+      ]))
+    .pipe(gulp.dest( imagesDestination ))
+  });
+  resizeImageTasks.push(resizeImageTask);
+});
+
+/**
+ * resize for hi density screens
+ */
+[800,1200,1600,2000,2400].forEach(function(size){
+  var resizeImageTask_hidpi = 'resize_HiDpi_' + size;
+  gulp.task(resizeImageTask_hidpi, function(){
+    return gulp.src( imagesSRC )
+      .pipe( filter('**/*.jpg') )
+      .pipe( newer( {
+        dest: imagesDestination,
+        map:
+          function(relativePath) {
+            let relativePathBasename = relativePath.replace('.jpg', '');
+            return relativePathBasename + '-' + size + '-2x' + '.jpg';
+          }
+      }))
+      .pipe( parallel(
+        imageResize({
+          imageMagick: true,
+          width: size,
+          crop: false,
+          upscale: false
+        }),
+        os.cpus().length
+      ))
+      .pipe( rename( function(path) {
+          path.basename += '-' + size + '-2x';
+      }))
+      .pipe( imagemin([
+        imageminJpegOptim({
+          max: 50,
+          stripAll: false,
+          stripCom: true,
+          stripExif: true,
+          stripIptc: true,
+          stripXmp: true,
+          stripIcc: false
+        })
+      ]))
+    .pipe(gulp.dest( imagesDestination ))
+  });
+  resizeImageTasks.push(resizeImageTask_hidpi);
+});
+gulp.task('resizeImages', resizeImageTasks);
 
 /**
  * Task: `images`.
@@ -387,15 +494,17 @@ gulp.task( 'customJS', function() {
  * again, do it with the command `gulp images`.
  */
 gulp.task( 'images', function() {
- gulp.src( imagesSRC )
-   .pipe( imagemin( {
-         progressive: true,
-         optimizationLevel: 1, // 0-7 low-high
-         interlaced: true,
-         svgoPlugins: [{removeViewBox: false}]
-       } ) )
-   .pipe(gulp.dest( imagesDestination ))
-   .pipe( notify( { message: 'TASK: "images" Completed! 💯', onLast: true } ) );
+  gulp.src( imagesSRC )
+    .pipe( filter('**/*.{gif, png, svg}'))
+    .pipe( newer( imagesDestination ))
+    .pipe( imagemin( {
+          progressive: true,
+          optimizationLevel: 1, // 0-7 low-high
+          interlaced: true,
+          svgoPlugins: [{removeViewBox: false}]
+        } ) )
+    .pipe(gulp.dest( imagesDestination ))
+    .pipe( notify( { message: 'TASK: "images" Completed! 💯', onLast: true } ) );
 });
 
 /**
@@ -463,8 +572,10 @@ gulp.task('alias-folders', function(){
 });
 gulp.task('useref', function(){
   return gulp.src('./build/**/*.+(html|php)')
-  .pipe(useref({transformPath: function(filePath){
-    const regExp = '\.*\/assets\\';
+  .pipe(useref({
+    searchPath: './build',
+    transformPath: function(filePath){
+    const regExp = /\.*\/assets/;
     return filePath.replace(regExp, '/assets');
   }}))
   .pipe(gulpIf('*.js', rev()))
@@ -484,7 +595,7 @@ gulp.task('copyFiles', function(){
 
 /** Build out the site to upload */
 gulp.task('build', function(){
-  runSequence('clean:dist', 'alias-folders', 'nunjucks',
+  runSequence('clean:dist', 'alias-folders',
     ['useref', 'fonts', 'copyFiles'], 'browser-sync_proof')
 });
 

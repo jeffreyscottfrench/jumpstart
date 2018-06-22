@@ -20,7 +20,6 @@ License: MIT or as noted by original authors.
 * change to the new directory from above
 * create new repo on github for this project (same name as above)
 * git remote set-url origin <new-repo-on-github>
-* git push origin master <new-repo-on-github>
 * optional: set jumpstart as the upstream to be able to get updates using directions here: https://help.github.com/articles/configuring-a-remote-for-a-fork/
 
 
@@ -30,7 +29,8 @@ License: MIT or as noted by original authors.
 
 ##### Search/Replace
 Case sensitive. Replace these placeholders in your project folder, examples given:
-* ProjectName          --> The Bitter Bottle
+* Project_Name         --> The Bitter Bottle
+* projectName          --> theBitterBottle or the-bitter-bottle
 * ProjectURLBase       --> thebitterbottle
 * ProjectAcronym       --> tbb (used for some css selectors)
 * url-social-mail      --> mailto:thebitterbottle@gmail.com (or link contact form)

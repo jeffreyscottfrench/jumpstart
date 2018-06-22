@@ -6,13 +6,13 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <title>ProjectName</title>
+    <title>Project_Name{{page_title}}</title>
     <meta name="robots" content="index,follow">
     <meta name="classification" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
-    <meta name="keywords" content="">
-    <meta name="copyright" content="All contents Copyright ProjectName">
+    <meta name="keywords" content="{{ page_keywords }}">
+    <meta name="copyright" content="All contents Copyright Project_Name">
     <meta name="distribution" content="Global">
     <meta name="rating" content="General">
     <meta name="language" content="en-us">
@@ -32,13 +32,13 @@
     <!--[if IE]><link rel="shortcut icon" href="favicon.ico" /><![endif]-->
     <meta name="msapplication-TileColor" content="#dd2a26">
     <meta name="msapplication-TileImage" content="/images/_favicon/favicon-144.png">
-    <meta name="application-name" content="ProjectName">
+    <meta name="application-name" content="Project_Name">
     <meta name="msapplication-tooltip" content="Tooltip">
     <meta name="msapplication-config" content="/ieconfig.xml">
 
     <link rel='mask-icon' href='/images/_favicon/icon.svg' color='#dd2a26'>
 
-    <!--build:css(./build) /assets/css/styles.min.css-->
+    <!--build:css /assets/css/styles.min.css-->
     <link rel="stylesheet" href="/assets/css/styles.css" type="text/css">
     <!--endbuild-->
 {% block headinsert %}{% endblock %}
@@ -56,7 +56,7 @@
     <div class="flex-box menu menu-top">
       <div class="container-headerLogo">
         <a href="/index.html">
-          <img class="logo-ClientAcronym" src="/images/header_logo.svg" alt="ProjectName Logo" title="ProjectName" />
+          <img class="logo-ProjectAcronym" src="/images/header_logo.svg" alt="Project_Name Logo" title="Project_Name" />
         </a>
       </div>
     </div>
@@ -74,13 +74,13 @@
       <div class="line">
       </div>
       <div class="footerLogo">
-        <img class="logo-ClientAcronym" src="/images/footer_logo.svg" alt="ProjectName Logo" title="ProjectName" />
+        <img class="logo-ProjectAcronym" src="/images/footer_logo.svg" alt="Project_Name Logo" title="Project_Name" />
       </div>
       <div class="line">
       </div>
     </div>
     <div class="copyright">
-      &copy; 2018 ProjectName
+      &copy; 2018 Project_Name
     </div>
     <div class="container-social social">
       <a class="social-mail" href="url-social-mail">&#xe806;</a>
@@ -96,13 +96,15 @@
 
 <script type="text/javascript" src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
 
-<!--build:js(./build) /assets/js/ProjectName.min.js -->
-<script src="/assets/js/ProjectName.js"></script>
+<!--build:js(./build) /assets/js/projectName.min.js -->
+<script src="/assets/js/projectName.js"></script>
 <!--endbuild-->
 
 <!--
 <script src="/assets/js/vendor/modernizr-2.8.3-respond-1.4.2.min.js"></script>
 -->
+
+{% block scripts %}{% endblock %}
 
 <!-- Google Analytics: change UA-XXXXX-X to be your site's ID and remove this comment. -->
 <script>
