@@ -20,7 +20,6 @@
   },
   "homepage": "https://github.com/jeffreyscottfrench/jumpstart#readme",
   "devDependencies": {
-    "autoprefixer": "^8.6.3",
     "babel-core": "^6.26.3",
     "babel-preset-env": "^1.7.0",
     "browser-sync": "^2.24.4",
@@ -29,6 +28,7 @@
     "del": "^3.0.0",
     "exiftool": "^0.0.3",
     "gulp": "3.9.1",
+    "gulp-autoprefixer": "^5.0.0",
     "gulp-babel": "^7.0.1",
     "gulp-cache": "^1.0.2",
     "gulp-clean-css": "^3.9.4",
@@ -40,6 +40,7 @@
     "gulp-filter": "^5.1.0",
     "gulp-if": "^2.0.2",
     "gulp-imagemin": "^4.1.0",
+    "gulp-image-resize": "^0.13.0",
     "gulp-line-ending-corrector": "^1.0.2",
     "gulp-merge-media-queries": "^0.2.1",
     "gulp-newer": "^1.4.0",
