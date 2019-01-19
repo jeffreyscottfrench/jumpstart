@@ -1,0 +1,310 @@
+// ----
+// Sass (v3.4.7)
+// Compass (v1.0.1)
+// ----
+
+/// Convert angle
+/// @author Chris Eppstein
+/// @param {Number} $value - Value to convert
+/// @param {String} $unit - Unit to convert to
+/// @return {Number} Converted angle
+@function convert-angle($value, $unit) {
+  $convertable-units: deg grad turn rad;
+  $conversion-factors: 1 (10grad/9deg) (1turn/360deg) (3.1415926rad/180deg);
+  @if index($convertable-units, unit($value)) and index($convertable-units, $unit) {
+    @return $value
+             / nth($conversion-factors, index($convertable-units, unit($value)))
+             * nth($conversion-factors, index($convertable-units, $unit));
+  }
+
+  @warn "Cannot convert `#{unit($value)}` to `#{$unit}`.";
+}
+
+/// Test if `$value` is an angle
+/// @param {*} $value - Value to test
+/// @return {Bool}
+@function is-direction($value) {
+  $is-direction: index((to top, to top right, to right top, to right, to bottom right, to right bottom, to bottom, to bottom left, to left bottom, to left, to left top, to top left), $value);
+  $is-angle: type-of($value) == 'number' and index('deg' 'grad' 'turn' 'rad', unit($value));
+
+  @return $is-direction or $is-angle;
+}
+
+/// Convert a direction to legacy syntax
+/// @param {Keyword | Angle} $value - Value to convert
+/// @require {function} is-direction
+/// @require {function} convert-angle
+@function legacy-direction($value) {
+  @if is-direction($value) == false {
+    @warn "Cannot convert `#{$value}` to legacy syntax because it doesn't seem to be an angle or a direction";
+  }
+
+  $conversion-map: (
+    to top          : bottom,
+    to top right    : bottom left,
+    to right top    : left bottom,
+    to right        : left,
+    to bottom right : top left,
+    to right bottom : left top,
+    to bottom       : top,
+    to bottom left  : top right,
+    to left bottom  : right top,
+    to left         : right,
+    to left top     : right bottom,
+    to top left     : bottom right
+  );
+
+  @if map-has-key($conversion-map, $value) {
+    @return map-get($conversion-map, $value);
+  }
+
+  @return 90deg - convert-angle($value, 'deg');
+}
+
+/// Mixin printing a linear-gradient
+/// as well as a plain color fallback
+/// and the `-webkit-` prefixed declaration
+/// @access public
+/// @param {String | List | Angle} $direction - Linear gradient direction
+/// @param {Arglist} $color-stops - List of color-stops composing the gradient
+@mixin linear-gradient($direction, $color-stops...) {
+  @if is-direction($direction) == false {
+    $color-stops: ($direction, $color-stops);
+    $direction: 180deg;
+  }
+
+  background: nth(nth($color-stops, 1), 1);
+  background: -webkit-linear-gradient(legacy-direction($direction), $color-stops);
+  background: linear-gradient($direction, $color-stops);
+}
+
+// Tests
+// .test-1 {
+//   @include linear-gradient(#31B7D7, #EDAC7D);
+// }
+//
+// .test-2 {
+//   @include linear-gradient(to right, #E47D7D 0%, #C195D3 50%, #4FB4E8 100%);
+// }
+//
+// .test-3 {
+//   @include linear-gradient(42deg, #B58234 0%, #D2B545 50%, #D7C04D 50.01%, #FFFFFF 100%);
+// }
+
+/// vendor prefixes for transforms
+// Browser Prefixes
+@mixin transform($transforms) {
+	-webkit-transform: $transforms;
+	-moz-transform: $transforms;
+	-ms-transform: $transforms;
+	transform: $transforms;
+}
+
+// Rotate
+@mixin rotate ($deg) {
+	@include transform(rotate(#{$deg}deg));
+}
+
+// Scale
+@mixin scale($scale) {
+	@include transform(scale($scale));
+}
+
+// Translate
+@mixin translate ($x, $y) {
+	@include transform(translate($x, $y));
+}
+
+// Skew
+@mixin skew ($x, $y) {
+	@include transform(skew(#{$x}deg, #{$y}deg));
+}
+
+// Transform Origin
+@mixin transform-origin ($origin) {
+    	-webkit-transform-origin: $origin;
+    	-moz-transform-origin: $origin;
+	-ms-transform-origin: $origin;
+	transform-origin: $origin;
+}
+
+/// vendor prefixes for transitions
+@mixin transition($transition-property, $transition-time, $method) {
+	-webkit-transition: $transition-property $transition-time $method;
+	-moz-transition: $transition-property $transition-time $method;
+	-ms-transition: $transition-property $transition-time $method;
+	-o-transition: $transition-property $transition-time $method;
+	transition: $transition-property $transition-time $method;
+}
+/* Usage - Stick into the top of your SCSS sheet and @include where needed for cross browser transitions.
+
+.class {
+     @include transition($transition-property, $transition-time, $method);
+}
+
+$transition-property = the property you want to transition
+$transition-time = seconds you want the transition to last
+$method = how you want it to transition - e.g. ease-in-out
+
+Usage example;
+
+-------------
+
+.item {
+    @include transition(padding, 1s, ease-in-out);
+}
+
+-------------
+
+*/
+/// vendor prefixes for Animations
+
+@mixin keyframes($animation-name) {
+    @-webkit-keyframes #{$animation-name} {
+        @content;
+    }
+    @-moz-keyframes #{$animation-name} {
+        @content;
+    }
+    @-ms-keyframes #{$animation-name} {
+        @content;
+    }
+    @-o-keyframes #{$animation-name} {
+        @content;
+    }
+    @keyframes #{$animation-name} {
+        @content;
+    }
+}
+
+@mixin animation($str) {
+  -webkit-animation: #{$str};
+  -moz-animation: #{$str};
+  -ms-animation: #{$str};
+  -o-animation: #{$str};
+  animation: #{$str};
+}
+
+// Box Shadow Mixins
+@mixin box-shadow-bottom($y:0px, $x:10px, $blur:10px, $spread:-10px, $color:rgba(153,153,153,1), $inset:false) {
+  @if $inset {
+    -webkit-box-shadow:inset $y $x $blur $spread $color;
+    -moz-box-shadow:inset $y $x $blur $spread $color;
+    box-shadow:inset $y $x $blur $spread $color;
+  } @else {
+    -webkit-box-shadow: $y $x $blur $spread $color;
+    -moz-box-shadow: $y $x $blur $spread $color;
+    box-shadow: $y $x $blur $spread $color;
+  }
+}
+@mixin box-shadow($y, $x, $blur, $spread, $color, $inset) {
+  @if $inset {
+    -webkit-box-shadow:inset $y $x $blur $spread $color;
+    -moz-box-shadow:inset $y $x $blur $spread $color;
+    box-shadow:inset $y $x $blur $spread $color;
+  } @else {
+    -webkit-box-shadow: $y $x $blur $spread $color;
+    -moz-box-shadow: $y $x $blur $spread $color;
+    box-shadow: $y $x $blur $spread $color;
+  }
+}
+
+// Spacing Mixins
+@mixin spaceVert($value:$space) {
+  @if $value {
+    margin-top: $value * 2;
+    &:first-child {
+      margin-top: 0;
+    }
+    @media (min-width: #{$break-mid}) {
+      margin-top: $value;
+    }
+  }
+  @else {
+    margin-top: $space2x;
+    &:first-child {
+      margin-top: 0;
+    }
+    @media (min-width: #{$break-mid}) {
+      margin-top: $space;
+    }
+  }
+}
+
+// Image Gallery Mixin - uses flexbox
+@mixin perRow($i, $value:$space, $center:false) {
+  $marg: null;
+  $margHalf: null;
+  @if $value {
+    $marg: $value;
+    $margHalf: $value / 2;
+  }
+  @else {
+    $marg: $space;
+    $margHalf: $space / 2;
+  }
+  @if $center == 'center' {
+    $center: 1;
+  }
+  margin-top: -$marg;
+  margin-left: -$margHalf;
+  margin-right: -$margHalf;
+  margin-bottom: 0;
+  & > * {
+    width: calc((100% - (#{$marg} * #{$i})) / #{$i});
+    margin: $marg $margHalf 0;
+    // center the contents of the last row when not full
+    @if $center {
+      // last row + 1st column
+      &:nth-last-child(-n+#{$i}):nth-child(#{$i}n+1) {
+        margin-left: auto;
+        margin-right: $margHalf;
+      }
+      // last row + last item
+      &:nth-last-child(-n+#{$i}):last-child {
+        margin-left: $margHalf;
+        margin-right: auto;
+      }
+      // last row + first column + last item
+      &:nth-last-child(-n+#{$i}):nth-child(#{$i}n+1):last-child {
+        margin-left: auto;
+        margin-right: auto;
+      }
+      // default settings for when last row is full
+      // last row + first column + nth from end
+      // last row + last column + last item
+      &:nth-last-child(-n+#{$i}):nth-child(#{$i}n+1):nth-last-child(#{$i}),
+      &:nth-last-child(-n+#{$i}):nth-child(#{$i}n+#{$i}):last-child {
+        margin: $marg $margHalf 0;
+      }
+    }
+  }
+}
+
+@mixin clear_perRow($i, $value:$space, $last:false) {
+  @if $value {
+    &:nth-child(-n+#{$i}) {
+      margin-top: $value;
+    }
+    &:nth-child(#{$i}n + 1) {
+      margin-left: $value;
+      @if $last {
+        &:last-child {
+          margin-left: $value;
+          margin-right: 0;
+        }
+      }
+    }
+  }
+  @else {
+    &:nth-child(#{$i}n + 1) {
+      margin-left: $space;
+      @if $last {
+        &:last-child {
+          margin-left: $space;
+          margin-right: 0;
+        }
+      }
+    }
+  }
+}

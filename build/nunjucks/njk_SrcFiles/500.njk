@@ -1,0 +1,15 @@
+{% extends "layout.njk" %}
+
+{% set content_special_class %}error-page{% endset %}
+
+{% block content %}
+<div class="container-section error-box">
+  <div class="error-message">
+    <h1>The server has encountered an error.</h1>
+    <p>
+      Sorry about that! We're sending you back to the last page in a moment, and you can try your request again.
+    </p>
+  </div>
+</div>
+<script>setTimeout(function(){history.back();}, 5000);</script>
+{% endblock %}

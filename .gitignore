@@ -1,12 +1,19 @@
 *.log
-# build/images/*
-# build/assets/img/*
-# exclude generated css in build folder
-# build/assets/css/*.css
+build/images/*
+build/assets/img/*
+
+build/assets/css/*.min.css
+build/assets/css/*.css.map
+
+build/assets/js/*.js
+build/assets/js/*.js.map
+
 # exclude generated html in build folder
-# build/*.html
+build/*.html
+build/subfolder/*.html
 # include google verification html doc
-# !build/google078ac50fbaa6c34f.html
+# !build/google*.html
+
 dist/
 node_modules/
 _src/

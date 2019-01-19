@@ -1,0 +1,9 @@
+/* Import partials from sass directory
+-------------------------------------------------- */
+@import
+  "variables", // define most common variables used
+  "devUtils",
+  "mixins", // self-curated and self-written mixins
+  "social-icons", // custom social icons using entypo icon fonts
+  "custom"
+;

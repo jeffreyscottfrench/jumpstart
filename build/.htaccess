@@ -1,0 +1,15 @@
+Options +FollowSymLinks
+RewriteEngine On
+
+#### Rule for Error Page ####
+ErrorDocument 404 http://website.com/404.html
+ErrorDocument 500 http://website.com/500.html
+
+#### RedirectMatch old content to new content ####
+RedirectMatch 301 /page.html http://website.com/newpage.html
+RedirectMatch 301 /folder/(.*) http://website.com/newpage.html
+
+
+AddType video/mp4 .mp4 .m4v
+AddType video/ogg .ogv
+AddType video/webm .webm

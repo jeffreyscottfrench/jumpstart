@@ -1,0 +1,33 @@
+//variables
+
+$font-size: 16px; // Default size is 16px
+$line-height: $font-size * 1.25; // Default multiplier is 1.25
+$letter-spacing: 1px; // Default is 1px
+
+$font-primary: Verdana, Geneva, sans-serif; // Body
+$font-secondary: Verdana, Geneva, sans-serif; // Menus
+$font-icon: "Entypo-subset", sans-serif; // Icons
+
+$color-primary: #bbbbbb;
+$color-secondary: #666666;
+$color-terciary: #000000;
+
+$border-primary: 1px solid $color-primary;
+$border-secondary: 1px solid $color-secondary;
+$border-inputs: 1px solid #cccccc;
+
+$break-small: 520px;
+$break-mid: 768px;
+$break-large: 1024px;
+// $break-xlarge: 1146px; // 1090px content + 5% for margins
+$break-giant: 1500px;  // Excludes most laptops
+$break-max: 2000px;  // Ultra-large displays
+
+$spacing-base: 10px;  // Use an even number
+
+// to-do: Clean this up as map or move to mixin that uses it.
+$space: $spacing-base;
+$space-half: $space / 2;
+$space2x: $space * 2;
+$space3x: $space * 3;
+$space4x: $space * 4;
