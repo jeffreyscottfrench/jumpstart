@@ -5,6 +5,11 @@ RewriteEngine On
 ErrorDocument 404 http://website.com/404.html
 ErrorDocument 500 http://website.com/500.html
 
+
+#### Alias a non-existent folder to content to make nicer links ####
+# RewriteRule ^portfolio$ http://website.com/dir/portfolio.html [R=301,L]
+
+
 #### RedirectMatch old content to new content ####
 RedirectMatch 301 /page.html http://website.com/newpage.html
 RedirectMatch 301 /folder/(.*) http://website.com/newpage.html
