@@ -16,5 +16,5 @@ build/subfolder/*.html
 
 dist/
 node_modules/
-src/
+z_src/
 etc
