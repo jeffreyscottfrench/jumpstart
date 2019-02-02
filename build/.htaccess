@@ -1,6 +1,10 @@
 Options +FollowSymLinks
 RewriteEngine On
 
+#### Forces SSL / HTTPS
+RewriteCond %{SERVER_PORT} 80
+RewriteRule ^(.*)$ https://website.com/$1 [R,L]
+
 #### Rule for Error Page ####
 ErrorDocument 404 http://website.com/404.html
 ErrorDocument 500 http://website.com/500.html
