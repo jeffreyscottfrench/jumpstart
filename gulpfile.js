@@ -371,7 +371,7 @@ gulp.task('customJS', function () {
   gulp.src(jsCustomSRC)
     .pipe(sourcemaps.init())
     .pipe(babel({
-      presets: ['env']
+      presets: ['@babel/env']
     }))
     .pipe(concat(jsCustomFile + '.js'))
     .pipe(sourcemaps.write('.'))
