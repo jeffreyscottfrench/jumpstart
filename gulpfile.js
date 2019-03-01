@@ -169,7 +169,7 @@ var reload       = browserSync.reload; // For manual browser reload.
  *    3. You may define a custom port
  *    4. You may want to stop the browser from openning automatically
  */
-gulp.task('browser-sync', function () {
+const browserSyncTask = function (done) {
   browserSync.init({
 
     // For more options
@@ -195,8 +195,13 @@ gulp.task('browser-sync', function () {
     browser: ["google chrome", "firefox developer edition"]
 
   });
-});
-gulp.task('browser-sync_proof', function () {
+  done();
+};
+
+gulp.task('browser-sync', gulp.series(browserSyncTask));
+
+
+const browserSyncProofTask = function (done) {
   browserSync.init({
 
     // For more options
@@ -222,39 +227,47 @@ gulp.task('browser-sync_proof', function () {
     browser: ["google chrome", "firefox developer edition"]
 
   });
-});
+  done();
+};
+
+gulp.task('browser-sync_proof', gulp.series(browserSyncProofTask));
 
 /**
  * Task: 'nunjucks'
  * standard nunjucks environment
  **/
-gulp.task('nunjucks', function () {
-  return gulp.src('./build/nunjucks/njk_SrcFiles/**/*.+(njk|html)')
+const nunjucksTask = function (done) {
+  gulp.src('./build/nunjucks/njk_SrcFiles/**/*.+(njk|html)')
     .pipe(nunjucksRender({
       path: ['./build/nunjucks/templates']
     }))
     .pipe(gulp.dest('./build'))
-});
+  done();
+};
+gulp.task('nunjucks', gulp.series(nunjucksTask));
 
 /**
  * Global variables from data
  * Used to pull data from json object and pass to all parts of nunjucks
  * Use .nunjucks file extension when pulling from json data object
  **/
-var getJsonData = function (file) {
+const getJsonData = function (file) {
   var fs = require('fs');
   return JSON.parse(fs.readFileSync(path.dirname(file.path) + '/' + path.basename(file.path, '.nunjucks') + '.json'));
 };
 
-gulp.task('json', function () {
-  return gulp.src('./build/nunjucks/njk_SrcFiles/**/*.nunjucks')
-    .pipe(data(getJsonData))
-    // Do stuff with the data here or just send it on down the pipe
-    .pipe(nunjucksRender({
-      path: ['./build/nunjucks/templates']
-    }))
-    .pipe(gulp.dest('./build'))
-});
+const jsonTask = function (done) {
+  gulp.src('./build/nunjucks/njk_SrcFiles/**/*.nunjucks')
+  .pipe(data(getJsonData))
+  // Do stuff with the data here or just send it on down the pipe
+  .pipe(nunjucksRender({
+    path: ['./build/nunjucks/templates']
+  }))
+  .pipe(gulp.dest('./build'))
+  done();
+};
+gulp.task('json', gulp.series(jsonTask));
+
 /**
  * Task: `styles`.
  *
@@ -269,55 +282,49 @@ gulp.task('json', function () {
  *    6. Minifies the CSS file and generates style.min.css
  *    7. Injects CSS or reloads the browser via browserSync
  */
-gulp.task('styles', function () {
-  gulp.src(styleSRC)
-    .pipe(sourcemaps.init())
-    .pipe(sass({
-      errLogToConsole: true,
-      outputStyle: 'compact',
-      //outputStyle: 'compressed',
-      // outputStyle: 'nested',
-      // outputStyle: 'expanded',
-      precision: 10
-    }))
-    .on('error', console.error.bind(console))
-    .pipe(sourcemaps.write({
-      includeContent: false
-    }))
-    .pipe(sourcemaps.init({
-      loadMaps: true
-    }))
-    // uncomment for manual list set above
-    // .pipe( postcss(autoprefixer( AUTOPREFIXER_BROWSERS )) )
-    .pipe(autoprefixer())
+const stylesTask = function (done) {
+  gulp.src( styleSRC )
+  .pipe( sourcemaps.init() )
+  .pipe( sass( {
+    errLogToConsole: true,
+    outputStyle: 'compact',
+    //outputStyle: 'compressed',
+    // outputStyle: 'nested',
+    // outputStyle: 'expanded',
+    precision: 10
+  } ) )
+  .on('error', console.error.bind(console))
+  .pipe( sourcemaps.write( { includeContent: false } ) )
+  .pipe( sourcemaps.init( { loadMaps: true } ) )
+  // uncomment for manual list set above
+  // .pipe( autoprefixer( AUTOPREFIXER_BROWSERS ) )
+  .pipe( autoprefixer() )
+  .pipe( sourcemaps.write ( "." ) ) // gulp is already in the dest folder now.
 
-    .pipe(sourcemaps.write(".")) // gulp is already in the dest folder now.
-    .pipe(lineec()) // Consistent Line Endings for non UNIX systems.
-    .pipe(gulp.dest(styleDestination))
+  .pipe( lineec() ) // Consistent Line Endings for non UNIX systems.
+  .pipe( gulp.dest( styleDestination ) )
 
-    .pipe(filter('**/*.css')) // Filtering stream to only css files
-    .pipe(mmq({
-      log: true
-    }))
+  .pipe( filter( '**/*.css' ) ) // Filtering stream to only css files
+  .pipe( mmq( {log: true} ))
 
-    .pipe(browserSync.stream()) // Reloads style.css if that is enqueued.
+  .pipe( browserSync.stream() ) // Reloads style.css if that is enqueued.
 
-    .pipe(rename({
-      suffix: '.min'
-    }))
-    .pipe(postcss([cssnano()]))
-    .pipe(lineec()) // Consistent Line Endings for non UNIX systems.
-    .pipe(gulp.dest(styleDestination))
+  .pipe( rename( { suffix: '.min' } ) )
+  .pipe( postcss([ cssnano() ]) )
+  .pipe( lineec() ) // Consistent Line Endings for non UNIX systems.
+  .pipe( gulp.dest( styleDestination ))
 
-    .pipe(filter('**/*.css')) // Filtering stream to only css files
-    .pipe(browserSync.stream()) // Reloads style.min.css if that is enqueued.
-    .pipe(notify({
-      onlast: true,
-      message: function () {
-        return 'TASK: "styles" Completed! 💯';
-      }
-    }));
-});
+  .pipe( filter( '**/*.css' )) // Filtering stream to only css files
+  .pipe( browserSync.stream() )// Reloads style.min.css if that is enqueued.
+  .pipe( notify({
+    onlast: true,
+    message: function(){
+      return 'TASK: "styles" Completed! 💯';
+    }
+  }));
+  done();
+};
+gulp.task('styles', gulp.series(stylesTask));
 
 /**
  * Task: `vendorJS`.
@@ -330,11 +337,11 @@ gulp.task('styles', function () {
  *     3. Renames the JS file with suffix .min.js
  *     4. Uglifes/Minifies the JS file and generates vendors.min.js
  */
-gulp.task('vendorsJs', function () {
+const vendorsJsTask = function (done) {
   gulp.src(jsVendorSRC)
     .pipe(sourcemaps.init())
     .pipe(babel({
-      presets: ['env']
+      presets: ['@babel/env']
     }))
     .pipe(concat(jsVendorFile + '.js'))
     .pipe(sourcemaps.write('.'))
@@ -353,7 +360,9 @@ gulp.task('vendorsJs', function () {
         return 'TASK: "vendorsJs" Completed! 💯';
       }
     }));
-});
+    done();
+};
+gulp.task('vendorsJs', gulp.series(vendorsJsTask));
 
 
 /**
@@ -367,7 +376,7 @@ gulp.task('vendorsJs', function () {
  *     3. Renames the JS file with suffix .min.js
  *     4. Uglifes/Minifies the JS file and generates custom.min.js
  */
-gulp.task('customJS', function () {
+const customJSTask = function (done) {
   gulp.src(jsCustomSRC)
     .pipe(sourcemaps.init())
     .pipe(babel({
@@ -390,95 +399,107 @@ gulp.task('customJS', function () {
         return 'TASK: "customJS" Completed! 💯';
       }
     }));
-});
+    done();
+};
+gulp.task('customJS', gulp.series(customJSTask));
 
-let resizeImageTasks = [];
 
-[400,600,800,1200,1600,2000].forEach(function(size){
-  var resizeImageTask = 'resize_' + size;
-  gulp.task(resizeImageTask, function(){
-    return gulp.src( imagesSRC )
-      .pipe( filter('**/*.jpg'))
-      .pipe( newer( {
-        dest: imagesDestination,
-        map:
-          function(relativePath) {
-            let relativePathBasename = relativePath.replace('.jpg', '');
-            return relativePathBasename + '-' + size + '.jpg';
-          }
-      }))
-      .pipe( parallel(
-        imageResize({
-          imageMagick: true,
-          width: size,
-          crop: false,
-          upscale: false
-        }),
-        os.cpus().length
-      ))
-      .pipe( rename( function(path) {
-          path.basename += '-' + size;
-      }))
-      .pipe( imagemin([
-        imageminJpegOptim({
-          max: 80,
-          stripAll: false,
-          stripCom: true,
-          stripExif: true,
-          stripIptc: true,
-          stripXmp: true,
-          stripIcc: false
-        })
-      ]))
-    .pipe(gulp.dest( imagesDestination ))
-  });
-  resizeImageTasks.push(resizeImageTask);
+// resize images
+let resizeTheseImages = [];
+
+[400,600,800,1200,1600,2000].forEach(function (size) {
+  let resizeThisImage = 'resize_' + size;
+  gulp.task(
+    resizeThisImage,
+    gulp.series( (done) => {
+      return gulp.src( imagesSRC )
+        .pipe( filter('**/*.jpg'))
+        .pipe( newer( {
+          dest: imagesDestination,
+          map:
+            function(relativePath) {
+              let relativePathBasename = relativePath.replace('.jpg', '');
+              return relativePathBasename + '-' + size + '.jpg';
+            }
+        }))
+        .pipe( parallel(
+          imageResize({
+            imageMagick: true,
+            width: size,
+            crop: false,
+            upscale: false
+          }),
+          os.cpus().length
+        ))
+        .pipe( rename( function(path) {
+            path.basename += '-' + size;
+        }))
+        .pipe( imagemin([
+          imageminJpegOptim({
+            max: 80,
+            stripAll: false,
+            stripCom: true,
+            stripExif: true,
+            stripIptc: true,
+            stripXmp: true,
+            stripIcc: false
+          })
+        ]))
+      .pipe(gulp.dest( imagesDestination ))
+      done();
+    })
+  );
+  resizeTheseImages.push(resizeThisImage);
 });
 
 /**
  * resize for hi density screens
  */
-[800,1200,1600,2000,2400].forEach(function(size){
-  var resizeImageTask_hidpi = 'resize_HiDpi_' + size;
-  gulp.task(resizeImageTask_hidpi, function(){
-    return gulp.src( imagesSRC )
-      .pipe( filter('**/*.jpg') )
-      .pipe( newer( {
-        dest: imagesDestination,
-        map:
-          function(relativePath) {
-            let relativePathBasename = relativePath.replace('.jpg', '');
-            return relativePathBasename + '-' + size + '-2x' + '.jpg';
-          }
-      }))
-      .pipe( parallel(
-        imageResize({
-          imageMagick: true,
-          width: size,
-          crop: false,
-          upscale: false
-        }),
-        os.cpus().length
-      ))
-      .pipe( rename( function(path) {
-          path.basename += '-' + size + '-2x';
-      }))
-      .pipe( imagemin([
-        imageminJpegOptim({
-          max: 50,
-          stripAll: false,
-          stripCom: true,
-          stripExif: true,
-          stripIptc: true,
-          stripXmp: true,
-          stripIcc: false
-        })
-      ]))
-    .pipe(gulp.dest( imagesDestination ))
-  });
-  resizeImageTasks.push(resizeImageTask_hidpi);
+[800,1200,1600,2000,2400].forEach(function (size) {
+  let resizeThisImage_hidpi = 'resize_HiDpi_' + size;
+  gulp.task(
+    resizeThisImage_hidpi,
+    gulp.series( (done) => {
+      return gulp.src( imagesSRC )
+        .pipe( filter('**/*.jpg') )
+        .pipe( newer( {
+          dest: imagesDestination,
+          map:
+            function(relativePath) {
+              let relativePathBasename = relativePath.replace('.jpg', '');
+              return relativePathBasename + '-' + size + '-2x' + '.jpg';
+            }
+        }))
+        .pipe( parallel(
+          imageResize({
+            imageMagick: true,
+            width: size,
+            crop: false,
+            upscale: false
+          }),
+          os.cpus().length
+        ))
+        .pipe( rename( function(path) {
+            path.basename += '-' + size + '-2x';
+        }))
+        .pipe( imagemin([
+          imageminJpegOptim({
+            max: 50,
+            stripAll: false,
+            stripCom: true,
+            stripExif: true,
+            stripIptc: true,
+            stripXmp: true,
+            stripIcc: false
+          })
+        ]))
+      .pipe(gulp.dest( imagesDestination ))
+      done();
+    })
+  );
+  resizeTheseImages.push(resizeThisImage_hidpi);
 });
-gulp.task('resizeImages', resizeImageTasks);
+gulp.task('resizeImages', gulp.parallel(resizeTheseImages));
 
 /**
  * Task: `images`.
@@ -493,19 +514,21 @@ gulp.task('resizeImages', resizeImageTasks);
  * This task will run only once, if you want to run it
  * again, do it with the command `gulp images`.
  */
-gulp.task( 'images', function() {
+const imagesTask = function (done) {
   gulp.src( imagesSRC )
-    .pipe( filter('**/*.{gif, png, svg}'))
-    .pipe( newer( imagesDestination ))
-    .pipe( imagemin( {
-          progressive: true,
-          optimizationLevel: 1, // 0-7 low-high
-          interlaced: true,
-          svgoPlugins: [{removeViewBox: false}]
-        } ) )
-    .pipe(gulp.dest( imagesDestination ))
-    .pipe( notify( { message: 'TASK: "images" Completed! 💯', onLast: true } ) );
-});
+  .pipe( filter('**/*.{gif, png, svg}'))
+  .pipe( newer( imagesDestination ))
+  .pipe( imagemin( {
+    progressive: true,
+    optimizationLevel: 1, // 0-7 low-high
+    interlaced: true,
+    svgoPlugins: [{removeViewBox: false}]
+  } ) )
+  .pipe(gulp.dest( imagesDestination ))
+  .pipe( notify( { message: 'TASK: "images" Completed! 💯', onLast: true } ) );
+  done();
+};
+gulp.task( 'images', imagesTask );
 
 /**
  * WP POT Translation File Generator.
@@ -517,21 +540,22 @@ gulp.task( 'images', function() {
  *     4. Generate a .pot file of i18n that can be used for l10n to build .mo file
  */
 // Uncomment to use
-// gulp.task( 'translate', function () {
-//     return gulp.src( projectPHPWatchFiles )
-//         .pipe(sort())
-//         .pipe(wpPot( {
-//             domain        : text_domain,
-//             destFile      : destFile,
-//             package       : packageName,
-//             bugReport     : bugReport,
-//             lastTranslator: lastTranslator,
-//             team          : team
-//         } ))
-//        .pipe(gulp.dest(translatePath))
-//        .pipe( notify( { message: 'TASK: "translate" Completed! 💯', onLast: true } ) )
-//
-// });
+// const translateTask = function (done) {
+//   gulp.src( projectPHPWatchFiles )
+//     .pipe(sort())
+//     .pipe(wpPot( {
+//         domain        : text_domain,
+//         destFile      : destFile,
+//         package       : packageName,
+//         bugReport     : bugReport,
+//         lastTranslator: lastTranslator,
+//         team          : team
+//     } ))
+//     .pipe(gulp.dest(translatePath))
+//     .pipe( notify( { message: 'TASK: "translate" Completed! 💯', onLast: true } ) )
+//     done();
+// };
+// gulp.task( 'translate', gulp.series(translateTask));
 
 
 /**
@@ -540,98 +564,132 @@ gulp.task( 'images', function() {
  * Syncs to folder outside of project folder for use on virtual machine.
  */
 // Uncomment to use
-// gulp.task('sync', function() {
-//  return gulp.src('./**/*')
-//    .pipe(newer('../../Dev/VVV/www/')) // add folder
-//    .pipe(gulp.dest('../../Dev/VVV/www/')); // add folder
-// });
+// const syncTask = function(done) {
+//   gulp.src('./**/*')
+//   .pipe(newer('../../Dev/VVV/www/')) // add folder
+//   .pipe(gulp.dest('../../Dev/VVV/www/')); // add folder
+//   done();
+// };
+// gulp.task('sync', gulp.series(syncTask));
+
 /**
  * Watches for file changes and runs the sync task above.
  */
 // Uncomment to use
-// gulp.task('sync-watch', function() {
-//  var watcher = gulp.watch('./**/*', ['sync']);
-//  watcher.on('change', function(ev) {
-//        if(ev.type === 'deleted') {
-//            del(path.relative('./', ev.path).replace('/','../../Dev/VVV/www/bmblog/htdocs/wp-content/themes/bm2017/'));
-//        }
-//    });
-// });
+// const syncWatchTask = function(done) {
+//   var watcher = gulp.watch('./**/*', gulp.parallel('sync'));
+//   watcher.on('change', function(ev) {
+//     if(ev.type === 'deleted') {
+//       del(path.relative('./', ev.path).replace('/','../../Dev/VVV/www/bmblog/htdocs/wp-content/themes/bm2017/'));
+//     }
+//   });
+//   done();
+// };
+// gulp.task('sync-watch', syncWatchTask);
 
 
 /** Build Tasks
   * These will excecute only when the build function is called
 */
 
-gulp.task('clean:dist', function(){
-  return del.sync('./dist');
-})
-gulp.task('alias-folders', function(){
-  return gulp.src('./build/images')
+const cleanDist = function (done) {
+  del.sync('./dist');
+  done();
+};
+gulp.task('clean:dist', gulp.series(cleanDist));
+
+const aliasFoldersTask = function (done) {
+  gulp.src('./build/images')
   .pipe(symlink('./dist/images'))
-});
-gulp.task('useref', function(){
-  return gulp.src('./build/**/*.+(html|php)')
+  done();
+};
+gulp.task('alias-folders', gulp.series(aliasFoldersTask))
+
+const userefTask = function (done) {
+  gulp.src('./build/**/*.+(html|php)')
   .pipe(useref({
     searchPath: './build',
-    transformPath: function(filePath){
-    const regExp = /\.*\/assets/;
-    return filePath.replace(regExp, '/assets');
-  }}))
+    transformPath: function (filePath) {
+      const regExp = /\.*\/assets/;
+      return filePath.replace(regExp, '/assets');
+    }
+  }))
   .pipe(gulpIf('*.js', rev()))
   .pipe(gulpIf('*.css', rev()))
   .pipe(revReplace())
   .pipe(gulp.dest('./dist'))
-});
-gulp.task('fonts', function(){
-  return gulp.src('./build/assets/fonts/**/*')
+  done();
+};
+gulp.task('useref', gulp.series(userefTask));
+
+const fontsTask = function (done) {
+  gulp.src('./build/assets/fonts/**/*')
   .pipe(gulp.dest('./dist/assets/fonts'))
-});
-gulp.task('copyFiles', function(){
-  return gulp.src(extras.files)
+  done();
+};
+gulp.task('fonts', gulp.series(fontsTask));
+
+const copyFilesTask = function (done) {
+  gulp.src(extras.files)
   .pipe(gulp.dest('./dist'))
-});
+  done();
+};
+gulp.task('copyFiles', gulp.series(copyFilesTask));
 
 
 /** Build out the site to upload */
-gulp.task('build', function(){
-  runSequence('clean:dist', 'alias-folders',
-    ['useref', 'fonts', 'copyFiles'], 'browser-sync_proof')
-});
+gulp.task(
+  'build',
+  gulp.series(
+    'clean:dist',
+    'alias-folders',
+    gulp.parallel('useref', 'fonts', 'copyFiles'),
+    'browser-sync_proof'
+  )
+);
 
 // Use With Sync to Virtual Machine (WP development)
-// gulp.task( 'default', ['styles', 'vendorsJs', 'customJS', 'images', 'sync', 'browser-sync'], function () {
-//  //gulp.watch( projectPHPWatchFiles, ['sync', reload ] ); // Reload on PHP file changes.
-//  gulp.watch( styleWatchFiles, [ 'styles', 'sync', reload ] ); // Reload on SCSS file changes.
-//  gulp.watch( vendorJSWatchFiles, [ 'vendorsJs', 'sync', reload ] ); // Reload on vendorsJs file changes.
-//  gulp.watch( customJSWatchFiles, [ 'customJS', 'sync', reload ] ); // Reload on customJS file changes.
-// });
+// gulp.task( 'devwp', gulp.series(
+//   gulp.parallel('styles', 'vendorsJs', 'customJS', 'images', 'sync'),
+//   gulp.series('browser-sync'),
+//   gulp.parallel(
+//     function () {
+//     gulp.watch( projectPHPWatchFiles, gulp.series('sync', browserSync.reload ) ); // Reload on PHP file changes.
+//     gulp.watch( styleWatchFiles, gulp.series('styles', 'sync', browserSync.reload) ); // Reload on SCSS file changes.
+//     gulp.watch( vendorJSWatchFiles, gulp.series( 'vendorsJs', 'sync', browserSync.reload ) ); // Reload on vendorsJs file changes.
+//     gulp.watch( customJSWatchFiles, gulp.series( 'customJS', 'sync', browserSync.reload ) ); // Reload on customJS file changes.
+//   })
+// ));
 
 // Watch for changes (called from default)
-gulp.task('watch', function(){
+const watchTasks = function (done) {
   // Rebuild compiled html files on nunjuck file changes and reload.
-  gulp.watch( projectNunjucksWatchFiles, function(){
-    runSequence('nunjucks', 'json', browserSync.reload);
-  });
+  gulp.watch( projectNunjucksWatchFiles, gulp.series('nunjucks', 'json', browserSync.reload));
   // Reload on SCSS file changes.
   gulp.watch( projectPHPWatchFiles ).on('change', browserSync.reload );
   // Rerun on SCSS file changes (will inject from styles task).
-  gulp.watch( styleWatchFiles, function(){
-    runSequence('styles');
-  } );
+  gulp.watch( styleWatchFiles, gulp.series('styles'));
   // Rerun and Reload on images file changes.
-  gulp.watch( imageWatchFiles, function(){
-    runSequence('images', browserSync.reload);
-  });
+  gulp.watch( imageWatchFiles, gulp.series('images', browserSync.reload));
   // Reload on vendorsJs file changes.
   gulp.watch( vendorJSWatchFiles ).on('change', browserSync.reload);
   // Rerun and Reload on customJS file changes.
-  gulp.watch( customJSWatchFiles, function(){
-    runSequence('customJS', browserSync.reload);
-  });
-});
+  gulp.watch( customJSWatchFiles, gulp.series('customJS', browserSync.reload));
+  done();
+};
+gulp.task('watch', gulp.parallel(watchTasks));
 
 // Standard
-gulp.task( 'default', function(){
-  runSequence('nunjucks', 'json', 'styles', 'vendorsJs', 'customJS', 'images', 'browser-sync', 'watch')
-});
+gulp.task(
+  'default',
+  gulp.series(
+    'nunjucks',
+    'json',
+    'styles',
+    'vendorsJs',
+    'customJS',
+    'images',
+    'browser-sync',
+    'watch'
+  )
+);
