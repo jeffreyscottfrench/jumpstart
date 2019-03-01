@@ -1,4 +1,5 @@
 *.log
+build/favicon.ico
 build/images/*
 build/assets/img/*
 
