@@ -18,7 +18,7 @@
  *     11. Build site for deployment noting revised assets.
  *
  * @author Jeffrey Scott French - extended from work by Ahmad Awais (@ahmadawais)
- * @version 1.2.0
+ * @version 1.3.0
  */
 /**
  * Configuration.
