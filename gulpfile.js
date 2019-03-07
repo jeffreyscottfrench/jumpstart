@@ -67,7 +67,7 @@ var imagesDestination       = './build/images/'; // Destination folder of optimi
 
 // Watch files paths.
 var styleWatchFiles         = './build/assets/scss/**/*.scss'; // Path to all *.scss files inside css folder and inside them.
-var vendorJSWatchFiles      = './build/assets/js/vendor/**/*.js'; // Path to all vendor JS files.
+var vendorsJSWatchFiles      = './build/assets/js/vendor/**/*.js'; // Path to all vendor JS files.
 var customJSWatchFiles      = './build/assets/js/custom/*.js'; // Path to all custom JS files.
 var imageWatchFiles         = './build/assets/img/raw/**/*.{png,jpg,gif,svg}'; // Path to all image files inside img folder and inside them.
 var projectPHPWatchFiles    = './**/*.php'; // Path to all PHP files.
@@ -154,7 +154,6 @@ var lazypipe     = require('lazypipe');
 var runSequence  = require('run-sequence');
 var php          = require('gulp-connect-php'); // Serve php files locally in the build environment using browserSync.
 var browserSync  = require('browser-sync').create(); // Reloads browser and injects CSS. Time-saving synchronised browser testing.
-var reload       = browserSync.reload; // For manual browser reload.
 
 
 
@@ -231,6 +230,12 @@ const browserSyncProofTask = function (done) {
 };
 
 gulp.task('browser-sync_proof', gulp.series(browserSyncProofTask));
+
+const browserSyncReloadTask = function(done) {
+  browserSync.reload();
+  done();
+}
+gulp.task('browserSyncReload', gulp.series(browserSyncReloadTask));
 
 /**
  * Task: 'nunjucks'
@@ -327,7 +332,7 @@ const stylesTask = function (done) {
 gulp.task('styles', gulp.series(stylesTask));
 
 /**
- * Task: `vendorJS`.
+ * Task: `vendorsJS`.
  *
  * Concatenate and uglify vendor JS scripts.
  *
@@ -337,7 +342,7 @@ gulp.task('styles', gulp.series(stylesTask));
  *     3. Renames the JS file with suffix .min.js
  *     4. Uglifes/Minifies the JS file and generates vendors.min.js
  */
-const vendorsJsTask = function (done) {
+const vendorsJSTask = function (done) {
   gulp.src(jsVendorSRC)
     .pipe(sourcemaps.init())
     .pipe(babel({
@@ -357,12 +362,12 @@ const vendorsJsTask = function (done) {
     .pipe(notify({
       onLast: true,
       message: function () {
-        return 'TASK: "vendorsJs" Completed! 💯';
+        return 'TASK: "vendorsJS" Completed! 💯';
       }
     }));
     done();
 };
-gulp.task('vendorsJs', gulp.series(vendorsJsTask));
+gulp.task('vendorsJS', gulp.series(vendorsJSTask));
 
 
 /**
@@ -650,13 +655,13 @@ gulp.task(
 
 // Use With Sync to Virtual Machine (WP development)
 // gulp.task( 'devwp', gulp.series(
-//   gulp.parallel('styles', 'vendorsJs', 'customJS', 'images', 'sync'),
+//   gulp.parallel('styles', 'vendorsJS', 'customJS', 'images', 'sync'),
 //   gulp.series('browser-sync'),
 //   gulp.parallel(
 //     function () {
 //     gulp.watch( projectPHPWatchFiles, gulp.series('sync', browserSync.reload ) ); // Reload on PHP file changes.
 //     gulp.watch( styleWatchFiles, gulp.series('styles', 'sync', browserSync.reload) ); // Reload on SCSS file changes.
-//     gulp.watch( vendorJSWatchFiles, gulp.series( 'vendorsJs', 'sync', browserSync.reload ) ); // Reload on vendorsJs file changes.
+//     gulp.watch( vendorsJSWatchFiles, gulp.series( 'vendorsJS', 'sync', browserSync.reload ) ); // Reload on vendorsJS file changes.
 //     gulp.watch( customJSWatchFiles, gulp.series( 'customJS', 'sync', browserSync.reload ) ); // Reload on customJS file changes.
 //   })
 // ));
@@ -664,17 +669,17 @@ gulp.task(
 // Watch for changes (called from default)
 const watchTasks = function (done) {
   // Rebuild compiled html files on nunjuck file changes and reload.
-  gulp.watch( projectNunjucksWatchFiles, gulp.series('nunjucks', 'json', browserSync.reload));
+  gulp.watch( projectNunjucksWatchFiles, gulp.series('nunjucks', 'json', 'browserSyncReload'));
   // Reload on SCSS file changes.
-  gulp.watch( projectPHPWatchFiles ).on('change', browserSync.reload );
+  gulp.watch( projectPHPWatchFiles ), gulp.series( 'browserSyncReload' );
   // Rerun on SCSS file changes (will inject from styles task).
   gulp.watch( styleWatchFiles, gulp.series('styles'));
   // Rerun and Reload on images file changes.
-  gulp.watch( imageWatchFiles, gulp.series('images', browserSync.reload));
-  // Reload on vendorsJs file changes.
-  gulp.watch( vendorJSWatchFiles ).on('change', browserSync.reload);
+  gulp.watch( imageWatchFiles, gulp.series('images', 'browserSyncReload'));
+  // Reload on vendorsJS file changes.
+  gulp.watch( vendorsJSWatchFiles ), gulp.series('vendorsJS', 'browserSyncReload');
   // Rerun and Reload on customJS file changes.
-  gulp.watch( customJSWatchFiles, gulp.series('customJS', browserSync.reload));
+  gulp.watch( customJSWatchFiles, gulp.series('customJS', 'browserSyncReload'));
   done();
 };
 gulp.task('watch', gulp.parallel(watchTasks));
@@ -686,7 +691,7 @@ gulp.task(
     'nunjucks',
     'json',
     'styles',
-    'vendorsJs',
+    'vendorsJS',
     'customJS',
     'images',
     'browser-sync',
