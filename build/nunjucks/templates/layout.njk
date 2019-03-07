@@ -6,7 +6,11 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <title>Project_Name{{page_title}}</title>
+  {% if page_title %}
+    <title>Project_Name | {{page_title}}</title>
+  {% else %}
+    <title>Project_Name</title>
+  {% endif %}
     <meta name="robots" content="index,follow">
     <meta name="classification" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
