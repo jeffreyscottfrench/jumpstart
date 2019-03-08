@@ -1,0 +1,79 @@
+.container-block {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.container-map {
+  position: relative;
+  width: 100%;
+  padding-bottom: 100%; // square map
+  //pointer-events: none;
+  &.map-clicked {
+    //pointer-events: auto;
+  }
+  & iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    pointer-events: none;
+    &.map-clicked {
+      pointer-events: auto;
+    }
+  }
+}
+.container-map-caption {
+  padding: 0 5px;
+  @media only screen and (min-width: $break-mid) {
+    float: left;
+    padding: 0 20px 0 0;
+  }
+}
+
+.google-map,
+.google-map-caption {
+  position: relative;
+  width: 100%;
+}
+.google-map {
+  height: 100%;
+  overflow: hidden;
+  order: 0;
+  @media only screen and (min-width: $break-mid) {
+    order: 2;
+  }
+  &.google-map-all {
+    @media only screen and (min-width: $break-mid) {
+      width: 100%;
+    }
+  }
+  & .container-map {
+    position: relative;
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    padding-bottom: 56.25%;
+    border: $border-primary;
+    @media only screen and (min-width: $break-mid) {
+      & a:hover {
+        cursor: pointer;
+      }
+    }
+  }
+}
+.google-map-caption {
+  order: 1;
+  @media only screen and (min-width: $break-mid) {
+    order: 0;
+    width: 48%;
+    float: left;
+  }
+  & .container-map-caption {
+    line-height: $line-height * 1.25;
+  }
+}

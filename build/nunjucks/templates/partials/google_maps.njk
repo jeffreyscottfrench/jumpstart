@@ -1,0 +1,57 @@
+<div class="container-block google-map">
+  <div class="container-map google-map" id="map">
+  </div>
+  <!--build:js /assets/js/googleMaps.min.js -->
+  <script src="/assets/js/googleMaps.js"></script>
+  <!--endbuild-->
+  <script>
+    function initMap() {
+      var map = new google.maps.Map(document.getElementById('map'), {
+        styles: googleMapStyle,
+        scrollwheel: false
+      });
+      var marker_A = new google.maps.Marker({
+        position: markerCoords_A,
+        map: map,
+        icon: '/images/crosshair.png',
+        title: 'Gate'
+      });
+      var marker_B = new google.maps.Marker({
+        position: markerCoords_B,
+        map: map,
+        icon: '/images/crosshair.png',
+        title: 'Marker B'
+      });
+      var marker_C = new google.maps.Marker({
+        position: markerCoords_C,
+        map: map,
+        icon: '/images/crosshair.png',
+        title: 'Marker C'
+      });
+      var marker_D = new google.maps.Marker({
+        position: markerCoords_D,
+        map: map,
+        icon: '/images/crosshair.png',
+        title: 'Marker D'
+      });
+      var markers = [marker_A, marker_B, marker_C, marker_D];
+      var bounds = new google.maps.LatLngBounds();
+      for (var i = 0; i < markers.length; i++) {
+        bounds.extend(markers[i].getPosition());
+      }
+      map.fitBounds(bounds);
+      google.maps.event.addListener(map, 'click', function(event){
+        this.setOptions({scrollwheel:true});
+      });
+      google.maps.event.addListener(map, 'mouseout', function(event){
+        this.setOptions({scrollwheel:false});
+      });
+      google.maps.event.addListener(markers, 'mouseover', function() {
+        infowindow.open(map,marker);
+      });
+    }
+  </script>
+  <script async defer
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyARo9KiAg9BNk1b8G7TMaYchKRF_OElZOc&callback=initMap">
+  </script>
+</div>
