@@ -1,7 +1,7 @@
 README
 
 
-## Jumpstart - V1.3.0
+## Jumpstart - V1.3.1
 
 Developed by Jeffrey Scott French with modified assets from:
 * Gulp for Wordpress - gulp workflow by Ahmad Awais
